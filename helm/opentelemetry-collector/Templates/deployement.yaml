@@ -25,4 +25,4 @@ spec:
       volumes:
         - name: otel-config
           configMap:
-            name: opentelemetry-collector-config
+            name: otel-config

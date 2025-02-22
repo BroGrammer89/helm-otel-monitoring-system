@@ -1,17 +1,23 @@
 replicaCount: 1
 image:
   repository: otel/opentelemetry-collector
-  tag: "0.29.0"
+  tag: "0.34.0"
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP
   port: 4317
 config: |
   receivers:
-    otlp:
-      protocols:
-        grpc:
-        http:
+    filelog:
+      include: ["/var/log/nginx/access.log"]
+      start_at: beginning
+      operators:
+        - type: json_parser
+          timestamp:
+            parse_from: attributes.time
+            layout: '%Y-%m-%dT%H:%M:%S.%fZ'
+          severity:
+            parse_from: attributes.level
   processors:
     batch:
   exporters:
@@ -29,7 +35,7 @@ config: |
   service:
     pipelines:
       logs:
-        receivers: [otlp]
+        receivers: [filelog]
         processors: [batch]
         exporters: [logging, coralogix, splunk_hec]
 resources: {}

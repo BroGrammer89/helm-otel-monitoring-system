@@ -6,7 +6,7 @@ data:
   nginx.conf: |
     events {}
     http {
-      {{ .Values.logFormat }}
+      {{ .Values.logFormat | indent 6 }}
       server {
         listen 80;
         location / {

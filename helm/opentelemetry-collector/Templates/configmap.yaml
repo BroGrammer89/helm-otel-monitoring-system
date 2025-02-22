@@ -1,18 +1,29 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-config
+  name: otel-collector-config
+  namespace: observability
 data:
-  nginx.conf: |
-    events {}
-    http {
-      {{ .Values.logFormat }}
-      server {
-        listen 80;
-        location / {
-          root /usr/share/nginx/html;
-          index index.html index.htm;
-        }
-        access_log /var/log/nginx/access.log json_combined;
-      }
-    }
+  otel-collector-config.yaml: |
+    receivers:
+      filelog:
+        include: ["/var/log/nginx/access.log", "/var/log/nginx/error.log"]
+        start_at: beginning
+        operators:
+          - type: regex_parser
+            regex: '^(?P<timestamp>[^ ]*) (?P<remote_addr>[^ ]*) (?P<remote_user>[^ ]*) (?P<request_time>[^ ]*) (?P<request_method>[^ ]*) (?P<request_uri>[^ ]*) (?P<status>[^ ]*) (?P<body_bytes_sent>[^ ]*) (?P<http_referer>[^ ]*) (?P<http_user_agent>[^ ]*) (?P<http_x_forwarded_for>[^ ]*)$'
+            timestamp:
+              parse_from: timestamp
+              layout: '%Y-%m-%dT%H:%M:%S.%fZ'
+    exporters:
+      logging:
+      coralogix:
+        private_key: "<YOUR_CORALOGIX_PRIVATE_KEY>"
+        application_name: "KubePOC"
+        subsystem_name: "Nginx"
+        endpoint: "https://api.coralogix.com/api/v1/logs"
+    service:
+      pipelines:
+        logs:
+          receivers: [filelog]
+          exporters: [logging, coralogix]
