@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-opentelemetry-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-opentelemetry-collector
+  template:
+    metadata:
+      labels:
+        app: my-opentelemetry-collector
+    spec:
+      containers:
+      - name: otel-collector
+        image: otel/opentelemetry-collector:latest
+        volumeMounts:
+        - name: otel-collector-config-vol
+          mountPath: /etc/otel-collector-config/otel-collector-config.yaml
+          subPath: otel-collector-config.yaml
+        command:
+        - "/otelcol"
+        - "--config=/etc/otel-collector-config/otel-collector-config.yaml"
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 13133
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 13133
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        securityContext: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: my-opentelemetry-collector
+      serviceAccountName: my-opentelemetry-collector
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: otel-collector-config-vol
+        configMap:
+          name: my-opentelemetry-collector
+          items:
+          - key: otel-collector-config.yaml
+            path: otel-collector-config.yaml
