@@ -1,82 +1,42 @@
+# Helm OpenTelemetry Monitoring System
+
+This project sets up a monitoring system using OpenTelemetry to collect logs from an Nginx server and send them to Coralogix and Splunk. The configuration is managed using Helm charts.
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
+Before you begin, ensure you have the following installed and configured:
 
-- [Kubernetes](https://kubernetes.io/docs/setup/)
-- [Helm](https://helm.sh/docs/intro/install/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+1. **Kubernetes Cluster**: A running Kubernetes cluster. You can use Minikube for local development.
+2. **Helm**: Helm must be installed to manage Kubernetes applications.
+3. **Container Runtime**: Docker or another container runtime must be installed and running.
 
-## Installation
+## Setup Instructions
 
-1. **Clone the repository**:
+### 1. Start Minikube
 
-    ```sh
-    git clone https://github.com/BroGrammer89/helm-otel-monitoring-system.git
-    cd helm-otel-monitoring-system
-    ```
+Start Minikube to create a local Kubernetes cluster:
 
-2. **Navigate to the Helm chart directory**:
+```sh
+minikube start
+2. Navigate to the Project Directory
+Navigate to the directory where your Helm charts are located:
+cd /path/to/your/project
+3. Deploy the Nginx Helm Chart
+Deploy the Nginx Helm chart using the provided configuration:
+install nginx helm/nginx
+4. Add the OpenTelemetry Helm Repository and Update It
+Add the OpenTelemetry Helm repository and update it to ensure you have the latest charts:
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+helm repo update
+5. Apply the OpenTelemetry Collector ConfigMap
+Apply the ConfigMap for the OpenTelemetry Collector configuration:
+helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector --set mode=deployment --set image.repository="otel/opentelemetry-collector-k8s" --set command.name="otelcol-k8s"
+7. Generate Traffic to the Nginx Server
+To generate logs, you need to send some traffic to the Nginx server. You can use a script or a tool like curl to generate requests.
 
-    ```sh
-    cd helm/nginx
-    ```
+Example using curl:
+# Get the Nginx service URL
+NGINX_URL=$(minikube service nginx --url)
 
-3. **Deploy Nginx**:
-
-    ```sh
-    helm install nginx .
-    ```
-
-4. **Navigate to the OpenTelemetry Collector directory**:
-
-    ```sh
-    cd ../opentelemetry-collector
-    ```
-
-5. **Deploy OpenTelemetry Collector**:
-
-    ```sh
-    helm install opentelemetry-collector .
-    ```
-
-6. **Navigate to the Splunk directory**:
-
-    ```sh
-    cd ../splunk
-    ```
-
-7. **Deploy Splunk**:
-
-    ```sh
-    helm install splunk .
-    ```
-
-8. **Navigate to the ELK directory**:
-
-    ```sh
-    cd ../elk
-    ```
-
-9. **Deploy ELK Stack**:
-
-    ```sh
-    helm install elk .
-    ```
-
-## Usage
-
-Once the Helm charts are deployed, you can access the services as follows:
-
-- **Nginx**: Access the Nginx service using the Kubernetes service URL.
-- **OpenTelemetry Collector**: The OpenTelemetry Collector will start collecting and exporting logs.
-- **Splunk**: Access the Splunk web interface using the Kubernetes service URL.
-- **ELK Stack**: Access Kibana using the Kubernetes service URL to visualize logs collected by Elasticsearch and Logstash.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+# Send some requests to the Nginx server
+for i in {1..10}; do curl $NGINX_URL; done
